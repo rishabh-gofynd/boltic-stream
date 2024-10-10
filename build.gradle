@@ -1,0 +1,57 @@
+apply plugin: 'com.android.library'
+apply plugin: 'kotlin-android'
+
+android {
+    defaultConfig {
+        compileSdk 33
+        defaultConfig {
+            minSdkVersion 16
+            versionName "4.11.4"
+            buildConfigField 'String', 'VERSION_NAME', "\"4.11.4\""
+            consumerProguardFiles 'proguard-rules-lib.txt'
+            multiDexEnabled true
+        }
+        namespace 'com.fynd.analytics'
+        compileOptions {
+            sourceCompatibility JavaVersion.VERSION_11
+            targetCompatibility JavaVersion.VERSION_11
+        }
+        kotlinOptions {
+            jvmTarget = '11'
+        }
+        buildFeatures {
+            buildConfig true
+        }
+    }
+}
+
+dependencies {
+    api "androidx.annotation:annotation:1.1.0"
+    implementation 'androidx.lifecycle:lifecycle-process:2.2.0'
+    implementation 'androidx.lifecycle:lifecycle-common-java8:2.2.0'
+    implementation "androidx.core:core-ktx:1.3.1"
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.9.0"
+    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3'
+}
+tasks.register('copyAARDebug', Copy) {
+    // Configuration block for the task
+    def newName = "${project.name}-debug-${android.defaultConfig.versionName}.aar"
+    from([buildDir.absolutePath, 'outputs', 'aar'].join(File.separator))
+    include("${project.name}-debug.aar")
+    into([rootDir.absolutePath, 'dist', "v${android.defaultConfig.versionName}"].join(File.separator))
+    rename("${project.name}-debug.aar", newName)
+}
+
+tasks.register('copyAARRelease', Copy) {
+    // Configuration block for the task
+    def newName = "${project.name}-release-${android.defaultConfig.versionName}.aar"
+    from([buildDir.absolutePath, 'outputs', 'aar'].join(File.separator))
+    include("${project.name}-release.aar")
+    into([rootDir.absolutePath, 'dist', "v${android.defaultConfig.versionName}"].join(File.separator))
+    rename("${project.name}-release.aar", newName)
+}
+
+afterEvaluate {
+    tasks.named('assembleDebug').configure { finalizedBy 'copyAARDebug' }
+    tasks.named('assembleRelease').configure { finalizedBy 'copyAARRelease' }
+}
